@@ -81,9 +81,17 @@ function Shell({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
+            <Link
+              href="/"
+              target="_blank"
+              className="ml-1 rounded-full bg-blueberry px-3 py-2 text-sm font-bold text-white transition hover:brightness-105"
+            >
+              <span aria-hidden>🌐</span>{" "}
+              <span className="hidden sm:inline">View site</span>
+            </Link>
             <button
               onClick={handleSignOut}
-              className="ml-1 rounded-full px-3 py-2 text-sm font-bold text-cocoa/60 hover:text-watermelon"
+              className="rounded-full px-3 py-2 text-sm font-bold text-cocoa/60 hover:text-watermelon"
             >
               Sign out
             </button>

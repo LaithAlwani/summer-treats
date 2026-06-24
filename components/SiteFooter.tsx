@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { KITCHEN_DISCLAIMER } from "@/lib/allergens";
 import { igProfileUrl } from "@/lib/format";
 
@@ -22,7 +23,16 @@ export function SiteFooter() {
           @{IG}
         </a>
         <p className="handw mt-5 text-lg text-cocoa/50">
-          made with ☀️ + sprinkles by the Summer Treats kids
+          made with{" "}
+          <Link
+            href="/admin"
+            aria-label="Admin login"
+            title="Admin"
+            className="cursor-pointer no-underline"
+          >
+            ☀️
+          </Link>{" "}
+          + sprinkles by the Summer Treats kids
         </p>
       </div>
     </footer>
