@@ -78,19 +78,16 @@ h4 {
   box-shadow: inset 0 0 0 2px rgba(74, 59, 50, 0.18);
 }
 
-/* Receipt / ticket: scalloped (perforated) top and bottom edges. */
+/* Receipt / ticket: white card with perforated (scalloped) top & bottom edges.
+   Drawn with backgrounds (cream half-circles) so it can never render blank. */
 .ticket {
-  background: #fff;
-  -webkit-mask:
-    radial-gradient(circle 9px at 9px 0, #0000 96%, #000) repeat-x top / 18px 12px,
-    radial-gradient(circle 9px at 9px 100%, #0000 96%, #000) repeat-x bottom / 18px
-      12px,
-    linear-gradient(#000 0 0) no-repeat center / 100% calc(100% - 22px);
-  mask:
-    radial-gradient(circle 9px at 9px 0, #0000 96%, #000) repeat-x top / 18px 12px,
-    radial-gradient(circle 9px at 9px 100%, #0000 96%, #000) repeat-x bottom / 18px
-      12px,
-    linear-gradient(#000 0 0) no-repeat center / 100% calc(100% - 22px);
+  border-radius: 0.5rem;
+  background:
+    radial-gradient(circle 8px at 8px 0, var(--color-cream) 97%, #0000) repeat-x
+      top / 18px 10px,
+    radial-gradient(circle 8px at 8px 100%, var(--color-cream) 97%, #0000)
+      repeat-x bottom / 18px 10px,
+    #fff;
 }
 
 /* Shared text input look. */

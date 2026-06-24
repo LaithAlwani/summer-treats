@@ -55,37 +55,40 @@ export default function ItemDetailPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <Link href="/" className="text-sm font-bold text-grape underline">
-        ← Back to the menu
+      <Link href="/" className="handw text-lg text-grape underline">
+        ← back to the menu
       </Link>
 
-      <div className="mt-4 overflow-hidden rounded-blob bg-white shadow-[0_8px_0_0_rgba(74,59,50,0.08)]">
-        <div className="aspect-video bg-cream">
-          {item.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.photoUrl}
-              alt={item.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="grid h-full w-full place-items-center text-7xl">
-              {cat.emoji}
-            </div>
-          )}
+      <div className="paper mt-4 rounded-blob">
+        <div className="flex justify-center pt-3">
+          <span className="tag-hole" />
+        </div>
+        <div className="px-3">
+          <div className="relative aspect-video overflow-hidden rounded-2xl bg-cream">
+            {item.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.photoUrl}
+                alt={item.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="grid h-full w-full place-items-center text-7xl">
+                {cat.emoji}
+              </div>
+            )}
+            <span className="handw absolute -bottom-1 right-3 rotate-3 rounded-lg bg-sunshine px-4 py-1 text-2xl text-cocoa shadow-md">
+              {formatMoney(item.price)}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-5 p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="text-sm font-bold text-cocoa/50">
-                {cat.emoji} {cat.label}
-              </span>
-              <h1 className="text-3xl text-cocoa">{item.name}</h1>
-            </div>
-            <span className="shrink-0 font-display text-2xl font-extrabold text-watermelon">
-              {formatMoney(item.price)}
+          <div>
+            <span className="handw text-lg text-grape">
+              {cat.emoji} {cat.label}
             </span>
+            <h1 className="text-4xl text-cocoa">{item.name}</h1>
           </div>
 
           {item.description && (
