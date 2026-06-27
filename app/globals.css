@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  /* Bright, playful palette (unchanged) */
-  --color-sunshine: #ffd23f;
-  --color-watermelon: #ff5e78;
-  --color-blueberry: #4d9de0;
-  --color-mint: #5ad2a0;
-  --color-grape: #9b5de5;
-  --color-cream: #fff8ec;
-  --color-cocoa: #4a3b32;
+  /* Palette tuned to the lemonade-stand logo */
+  --color-sunshine: #f8ce3f; /* sun & lemons */
+  --color-watermelon: #ee8273; /* soft coral — primary accent */
+  --color-blueberry: #2fb0a5; /* teal — jar, leaves, "TREATS" */
+  --color-mint: #79c6a6; /* soft leaf green */
+  --color-grape: #7ac6d8; /* soft cyan — straw & sparkles */
+  --color-cream: #fbf3dc; /* warm ivory (matches logo background) */
+  --color-cocoa: #46413b; /* warm dark for body text */
 
   /* Three type roles: poster display, handwritten marker, clean body */
   --font-display: var(--font-baloo), system-ui, sans-serif;

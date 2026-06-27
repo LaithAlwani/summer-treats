@@ -16,6 +16,7 @@ export default function AdminSchedulePage() {
   const assign = useMutation(api.schedule.assign);
   const unassign = useMutation(api.schedule.unassign);
   const setSoldOut = useMutation(api.schedule.setSoldOut);
+  const setLimit = useMutation(api.schedule.setLimit);
 
   const assignedIds = new Set(
     (assigned ?? []).map((a) => a.item?._id).filter(Boolean),
@@ -73,46 +74,73 @@ export default function AdminSchedulePage() {
           {assigned?.map((row) => (
             <div
               key={row.scheduleId}
-              className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm"
+              className="rounded-2xl bg-white p-3 shadow-sm"
             >
-              <span className="text-2xl">
-                {row.item ? categoryInfo(row.item.category).emoji : "❓"}
-              </span>
-              <div className="flex-1">
-                <p className="font-bold text-cocoa">
-                  {row.item?.name ?? "(deleted item)"}
-                </p>
-                {row.item && (
-                  <p className="text-sm text-cocoa/60">
-                    {formatMoney(row.item.price)}
-                    {!row.item.active && " · hidden"}
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">
+                  {row.item ? categoryInfo(row.item.category).emoji : "❓"}
+                </span>
+                <div className="flex-1">
+                  <p className="font-bold text-cocoa">
+                    {row.item?.name ?? "(deleted item)"}
                   </p>
-                )}
+                  {row.item && (
+                    <p className="text-sm text-cocoa/60">
+                      {formatMoney(row.item.price)}
+                      {!row.item.active && " · hidden"}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() =>
+                    setSoldOut({
+                      scheduleId: row.scheduleId as Id<"schedule">,
+                      soldOut: !row.soldOut,
+                    })
+                  }
+                  className={`rounded-full px-3 py-1.5 text-sm font-bold ${
+                    row.soldOut
+                      ? "bg-cocoa text-white"
+                      : "border-2 border-cocoa/15 text-cocoa"
+                  }`}
+                >
+                  {row.soldOut ? "Sold out" : "In stock"}
+                </button>
+                <button
+                  onClick={() =>
+                    unassign({ scheduleId: row.scheduleId as Id<"schedule"> })
+                  }
+                  aria-label="Remove from day"
+                  className="text-cocoa/40 hover:text-watermelon"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                onClick={() =>
-                  setSoldOut({
-                    scheduleId: row.scheduleId as Id<"schedule">,
-                    soldOut: !row.soldOut,
-                  })
-                }
-                className={`rounded-full px-3 py-1.5 text-sm font-bold ${
-                  row.soldOut
-                    ? "bg-cocoa text-white"
-                    : "border-2 border-cocoa/15 text-cocoa"
-                }`}
-              >
-                {row.soldOut ? "Sold out" : "In stock"}
-              </button>
-              <button
-                onClick={() =>
-                  unassign({ scheduleId: row.scheduleId as Id<"schedule"> })
-                }
-                aria-label="Remove from day"
-                className="text-cocoa/40 hover:text-watermelon"
-              >
-                ✕
-              </button>
+
+              {/* Daily limit */}
+              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-cocoa/10 pt-2 text-sm">
+                <label className="font-bold text-cocoa/70">Daily limit:</label>
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  defaultValue={row.limit ?? ""}
+                  placeholder="∞"
+                  onBlur={(e) => {
+                    const raw = e.target.value.trim();
+                    setLimit({
+                      scheduleId: row.scheduleId as Id<"schedule">,
+                      limit: raw === "" ? null : Number(raw),
+                    });
+                  }}
+                  className="input max-w-20 py-1"
+                />
+                <span className="text-cocoa/50">
+                  {row.orderedQty} ordered
+                  {row.limit != null &&
+                    ` · ${Math.max(0, row.limit - row.orderedQty)} left`}
+                </span>
+              </div>
             </div>
           ))}
         </div>

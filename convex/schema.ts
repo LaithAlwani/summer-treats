@@ -62,6 +62,7 @@ export default defineSchema({
     date: v.string(), // ISO "YYYY-MM-DD" pickup date
     itemId: v.id("items"),
     soldOut: v.optional(v.boolean()),
+    limit: v.optional(v.number()), // max quantity orderable that day (undefined = unlimited)
   })
     .index("by_date", ["date"])
     .index("by_date_item", ["date", "itemId"]),
@@ -87,5 +88,8 @@ export default defineSchema({
     acceptingPreorders: v.boolean(),
     closedMessage: v.optional(v.string()),
     pickupWindows: v.optional(v.array(pickupWindowValidator)),
+    // Ordering for a date closes `cutoffDaysBefore` days earlier at `cutoffTime`.
+    cutoffTime: v.optional(v.string()), // "HH:MM", default "18:00"
+    cutoffDaysBefore: v.optional(v.number()), // default 1 (the day before)
   }),
 });

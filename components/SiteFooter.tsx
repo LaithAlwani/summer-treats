@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { KITCHEN_DISCLAIMER } from "@/lib/allergens";
 import { igProfileUrl } from "@/lib/format";
+import { PoweredBy } from "./PoweredBy";
 
 const IG = process.env.NEXT_PUBLIC_IG_USERNAME ?? "summertreatskids";
 
@@ -34,6 +35,10 @@ export function SiteFooter() {
           </Link>{" "}
           + sprinkles by the Summer Treats kids
         </p>
+
+        <div>
+          <PoweredBy />
+        </div>
       </div>
     </footer>
   );

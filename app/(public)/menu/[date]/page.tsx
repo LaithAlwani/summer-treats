@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { prettyDateLong } from "@/lib/dates";
+import { DEFAULT_CUTOFF, isOrderingOpenForDate, cutoffLabel } from "@/lib/cutoff";
 import { ItemCard } from "@/components/ItemCard";
 import { ClosedBanner } from "@/components/ClosedBanner";
 
@@ -14,7 +15,12 @@ export default function DayMenuPage() {
 
   const items = useQuery(api.schedule.getMenuForDate, { date });
   const status = useQuery(api.settings.getStoreStatus, {});
-  const ordersOpen = status?.acceptingPreorders ?? true;
+  const acceptingPreorders = status?.acceptingPreorders ?? true;
+  const cutoff = status
+    ? { time: status.cutoffTime, daysBefore: status.cutoffDaysBefore }
+    : DEFAULT_CUTOFF;
+  const dayOpen = isOrderingOpenForDate(date, cutoff);
+  const open = acceptingPreorders && dayOpen;
   const loading = items === undefined || status === undefined;
 
   return (
@@ -25,7 +31,13 @@ export default function DayMenuPage() {
       <h1 className="mt-3 text-3xl text-blueberry">{prettyDateLong(date)}</h1>
 
       <div className="mt-5">
-        {!ordersOpen && <ClosedBanner message={status?.closedMessage} />}
+        {!acceptingPreorders && <ClosedBanner message={status?.closedMessage} />}
+
+        {acceptingPreorders && !dayOpen && (
+          <div className="mb-5 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-center font-semibold text-amber-800">
+            ⏰ Ordering for this day closed at {cutoffLabel(date, cutoff)}.
+          </div>
+        )}
 
         {loading && (
           <p className="py-16 text-center font-semibold text-cocoa/50">
@@ -47,7 +59,7 @@ export default function DayMenuPage() {
                 key={item._id}
                 item={item}
                 date={date}
-                ordersOpen={ordersOpen}
+                ordersOpen={open}
               />
             ))}
           </div>

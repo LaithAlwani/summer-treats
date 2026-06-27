@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useCart } from "@/lib/cart";
 import { formatMoney } from "@/lib/format";
 import { prettyDateLong } from "@/lib/dates";
 import { formatWindow } from "@/lib/time";
+import { DEFAULT_CUTOFF, isOrderingOpenForDate, cutoffLabel } from "@/lib/cutoff";
+import { loadCustomer, saveCustomer } from "@/lib/customer";
 import { QuantityStepper } from "@/components/QuantityStepper";
 import { ClosedBanner } from "@/components/ClosedBanner";
 
@@ -17,8 +19,15 @@ export default function OrderPage() {
   const { state, setQuantity, remove, total, count } = useCart();
   const createOrder = useMutation(api.orders.create);
   const status = useQuery(api.settings.getStoreStatus, {});
-  const ordersOpen = status?.acceptingPreorders ?? true;
+  const acceptingPreorders = status?.acceptingPreorders ?? true;
   const windows = status?.pickupWindows ?? [];
+  const cutoff = status
+    ? { time: status.cutoffTime, daysBefore: status.cutoffDaysBefore }
+    : DEFAULT_CUTOFF;
+  const dayOpen = state.pickupDate
+    ? isOrderingOpenForDate(state.pickupDate, cutoff)
+    : true;
+  const canOrder = acceptingPreorders && dayOpen;
 
   const [name, setName] = useState("");
   const [igHandle, setIgHandle] = useState("");
@@ -27,6 +36,17 @@ export default function OrderPage() {
   const [pickupWindow, setPickupWindow] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Prefill from the last order saved in this browser (browser-only API, so
+  // it has to run in an effect after mount).
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const saved = loadCustomer();
+    if (saved.name) setName(saved.name);
+    if (saved.igHandle) setIgHandle(saved.igHandle);
+    if (saved.contact) setContact(saved.contact);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (count === 0) {
     return (
@@ -55,6 +75,12 @@ export default function OrderPage() {
       setError("Something's off with the pickup date. Try re-adding items.");
       return;
     }
+    if (!dayOpen) {
+      setError(
+        `Ordering for ${prettyDateLong(state.pickupDate)} has closed (orders were due by ${cutoffLabel(state.pickupDate, cutoff)}).`,
+      );
+      return;
+    }
     if (windows.length > 0 && !pickupWindow) {
       setError("Please choose a pickup time.");
       return;
@@ -72,6 +98,12 @@ export default function OrderPage() {
           itemId: l.itemId,
           quantity: l.quantity,
         })),
+      });
+      // Remember details for next time.
+      saveCustomer({
+        name: name.trim(),
+        igHandle: igHandle.trim() || undefined,
+        contact: contact.trim() || undefined,
       });
       router.push(`/order/confirmation?orderId=${orderId}`);
     } catch (err) {
@@ -94,9 +126,17 @@ export default function OrderPage() {
         </p>
       )}
 
-      {!ordersOpen && (
+      {!acceptingPreorders && (
         <div className="mt-5">
           <ClosedBanner message={status?.closedMessage} />
+        </div>
+      )}
+
+      {acceptingPreorders && !dayOpen && state.pickupDate && (
+        <div className="mt-5 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-center font-semibold text-amber-800">
+          ⏰ Ordering for this day closed at{" "}
+          {cutoffLabel(state.pickupDate, cutoff)}. Please pick an upcoming day
+          from the menu.
         </div>
       )}
 
@@ -222,14 +262,16 @@ export default function OrderPage() {
 
         <button
           type="submit"
-          disabled={submitting || !ordersOpen}
+          disabled={submitting || !canOrder}
           className="w-full rounded-full bg-watermelon px-6 py-4 font-display text-xl font-extrabold text-white shadow-lg transition hover:brightness-105 disabled:opacity-50"
         >
-          {!ordersOpen
+          {!acceptingPreorders
             ? "Preorders are closed"
-            : submitting
-              ? "Placing order…"
-              : "Place preorder 🎉"}
+            : !dayOpen
+              ? "Ordering closed for that day"
+              : submitting
+                ? "Placing order…"
+                : "Place preorder 🎉"}
         </button>
         <p className="text-center text-xs text-cocoa/50">
           Next you&apos;ll send your order to us on Instagram to confirm.

@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { todayISO, prettyDateLong, weekdayShort } from "@/lib/dates";
+import {
+  DEFAULT_CUTOFF,
+  isOrderingOpenForDate,
+  cutoffLabel,
+} from "@/lib/cutoff";
 import { ItemCard } from "@/components/ItemCard";
 import { ClosedBanner } from "@/components/ClosedBanner";
 
@@ -13,7 +19,10 @@ export default function HomePage() {
   const week = useQuery(api.schedule.getWeekMenu, { startDate });
   const status = useQuery(api.settings.getStoreStatus, {});
 
-  const ordersOpen = status?.acceptingPreorders ?? true;
+  const acceptingPreorders = status?.acceptingPreorders ?? true;
+  const cutoff = status
+    ? { time: status.cutoffTime, daysBefore: status.cutoffDaysBefore }
+    : DEFAULT_CUTOFF;
   const loading = week === undefined || status === undefined;
   const daysWithItems = (week ?? []).filter((d) => d.items.length > 0);
 
@@ -24,27 +33,35 @@ export default function HomePage() {
       : daysWithItems[0]?.date;
   const selectedDay = daysWithItems.find((d) => d.date === selectedDate);
 
+  // A day is orderable if the shop is accepting orders AND we're before its cutoff.
+  const dayOpen = (date: string) =>
+    acceptingPreorders && isOrderingOpenForDate(date, cutoff);
+  const selectedOpen = selectedDate ? dayOpen(selectedDate) : false;
+
   return (
     <div>
-      {/* Hero — a hand-lettered stand sign */}
+      {/* Hero — the logo front and center */}
       <section className="relative overflow-hidden">
         <div className="sprinkles absolute inset-0" aria-hidden />
-        <div className="relative mx-auto max-w-4xl px-4 pb-6 pt-10 text-center">
-          <p className="handw -rotate-2 text-2xl text-grape">
-            ✿ fresh from our kitchen ✿
-          </p>
-          <h1 className="mt-1 text-5xl font-extrabold text-watermelon sm:text-6xl">
-            Today&apos;s Treats
-          </h1>
-          <p className="handw mx-auto mt-2 max-w-md text-xl text-cocoa/70">
-            Pick a day, add your favorites, and send us your order on Instagram.
-            A new menu every day!
+        <div className="relative mx-auto max-w-4xl px-4 pb-5 pt-6 text-center">
+          <h1 className="sr-only">Summer Treats</h1>
+          <Image
+            src="/logo.png"
+            alt="Summer Treats — lemonade and treats"
+            width={360}
+            height={360}
+            priority
+            className="mx-auto h-auto w-56 sm:w-72"
+          />
+          <p className="handw mx-auto -mt-1 max-w-md text-xl text-blueberry">
+            Pick a day, add your favorites, and send us your order on Instagram —
+            a new menu every day!
           </p>
         </div>
       </section>
 
       <div className="mx-auto max-w-4xl px-4">
-        {!ordersOpen && <ClosedBanner message={status?.closedMessage} />}
+        {!acceptingPreorders && <ClosedBanner message={status?.closedMessage} />}
 
         {loading && (
           <p className="handw py-16 text-center text-2xl text-cocoa/50">
@@ -71,6 +88,7 @@ export default function HomePage() {
               {daysWithItems.map((day) => {
                 const isToday = day.date === startDate;
                 const active = day.date === selectedDate;
+                const closed = !dayOpen(day.date);
                 return (
                   <button
                     key={day.date}
@@ -79,11 +97,11 @@ export default function HomePage() {
                       active
                         ? "border-watermelon bg-watermelon text-white shadow-md"
                         : "border-cocoa/10 bg-white text-cocoa hover:border-cocoa/25"
-                    }`}
+                    } ${closed && !active ? "opacity-55" : ""}`}
                   >
                     <span
                       className={`mb-1 h-2.5 w-2.5 rounded-full ${
-                        active ? "bg-white/70" : "bg-cocoa/15"
+                        active ? "bg-white/70" : closed ? "bg-cocoa/15" : "bg-mint"
                       }`}
                     />
                     <span className="handw text-lg leading-none">
@@ -107,13 +125,21 @@ export default function HomePage() {
               </span>
             </div>
 
+            {acceptingPreorders && !selectedOpen && (
+              <div className="mb-4 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-center font-semibold text-amber-800">
+                ⏰ Ordering for this day closed at{" "}
+                {cutoffLabel(selectedDate!, cutoff)}. Pick an upcoming day to
+                order!
+              </div>
+            )}
+
             <div className="columns-1 gap-5 sm:columns-2">
               {selectedDay.items.map((item) => (
                 <ItemCard
                   key={item._id}
                   item={item}
                   date={selectedDay.date}
-                  ordersOpen={ordersOpen}
+                  ordersOpen={selectedOpen}
                 />
               ))}
             </div>

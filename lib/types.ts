@@ -14,4 +14,6 @@ export type MenuItem = {
   photoUrl: string | null;
   scheduleId?: Id<"schedule">;
   soldOut?: boolean;
+  limit?: number | null;
+  remaining?: number | null;
 };

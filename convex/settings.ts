@@ -28,6 +28,8 @@ export const getStoreStatus = query({
       acceptingPreorders: row?.acceptingPreorders ?? true,
       closedMessage: row?.closedMessage,
       pickupWindows: row?.pickupWindows ?? DEFAULT_PICKUP_WINDOWS,
+      cutoffTime: row?.cutoffTime ?? "18:00",
+      cutoffDaysBefore: row?.cutoffDaysBefore ?? 1,
     };
   },
 });
@@ -63,5 +65,18 @@ export const setPickupWindows = mutation({
     }
     const row = await getOrCreateSettings(ctx);
     await ctx.db.patch(row._id, { pickupWindows: windows });
+  },
+});
+
+// Edit the ordering cutoff (e.g. close ordering at 6pm the day before).
+export const setOrderCutoff = mutation({
+  args: { cutoffTime: v.string(), cutoffDaysBefore: v.number() },
+  handler: async (ctx, { cutoffTime, cutoffDaysBefore }) => {
+    await requireAdmin(ctx);
+    if (cutoffDaysBefore < 0 || !Number.isInteger(cutoffDaysBefore)) {
+      throw new Error("Days before pickup must be a whole number (0 or more).");
+    }
+    const row = await getOrCreateSettings(ctx);
+    await ctx.db.patch(row._id, { cutoffTime, cutoffDaysBefore });
   },
 });

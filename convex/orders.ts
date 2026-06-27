@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { orderStatusValidator } from "./schema";
 import { requireAdmin } from "./helpers";
+import { orderedQtyByItem } from "./schedule";
 
 // ---- Public ----
 
@@ -33,6 +34,16 @@ export const create = mutation({
       throw new Error("Please add your name.");
     }
 
+    // Light guard against ordering for a day that has already passed. The exact
+    // "6pm the day before" cutoff is enforced in the UI using local time.
+    const todayUTC = new Date(Date.now()).toISOString().slice(0, 10);
+    if (args.pickupDate < todayUTC) {
+      throw new Error("That pickup day has already passed.");
+    }
+
+    // How much of each item is already spoken for that day (for daily limits).
+    const alreadyOrdered = await orderedQtyByItem(ctx, args.pickupDate);
+
     // 2. Validate each line and build trustworthy snapshots.
     const lineItems = [];
     let total = 0;
@@ -56,6 +67,17 @@ export const create = mutation({
       }
       if (scheduled.soldOut) {
         throw new Error(`Sorry, ${item.name} is sold out.`);
+      }
+      // Enforce the daily limit, if one is set.
+      if (scheduled.limit != null) {
+        const remaining = scheduled.limit - (alreadyOrdered.get(line.itemId) ?? 0);
+        if (line.quantity > remaining) {
+          throw new Error(
+            remaining <= 0
+              ? `Sorry, ${item.name} is sold out for that day.`
+              : `Only ${remaining} of ${item.name} left for that day.`,
+          );
+        }
       }
       lineItems.push({
         itemId: item._id,

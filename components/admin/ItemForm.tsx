@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { ALLERGENS, CATEGORIES, Allergen, Category } from "@/lib/allergens";
 import { formatMoney } from "@/lib/format";
+import { compressImage } from "@/lib/image";
 
 export type EditableItem = {
   _id: Id<"items">;
@@ -47,9 +48,19 @@ export function ItemForm({
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     item?.photoUrl ?? null,
   );
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) {
+      setPhotoFile(f);
+      setPhotoPreview(URL.createObjectURL(f));
+    }
+  }
 
   function toggleAllergen(a: Allergen) {
     setAllergens((prev) =>
@@ -89,14 +100,22 @@ export function ItemForm({
         itemId = await create(fields);
       }
 
-      // Upload a newly chosen photo (3-step Convex flow).
-      const file = fileRef.current?.files?.[0];
-      if (file) {
+      // Upload a newly chosen photo (compress first; 3-step Convex flow).
+      if (photoFile) {
+        let body: Blob = photoFile;
+        let type = photoFile.type;
+        try {
+          const out = await compressImage(photoFile);
+          body = out.blob;
+          type = out.type;
+        } catch {
+          // If compression fails, upload the original.
+        }
         const postUrl = await generateUploadUrl();
         const res = await fetch(postUrl, {
           method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
+          headers: { "Content-Type": type },
+          body,
         });
         const { storageId } = await res.json();
         await setPhoto({ itemId, storageId });
@@ -214,25 +233,55 @@ export function ItemForm({
       <div>
         <span className="font-bold text-cocoa">Photo</span>
         <div className="mt-1 flex items-center gap-3">
-          {photoPreview && (
+          {photoPreview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={photoPreview}
               alt=""
               className="h-16 w-16 rounded-xl object-cover"
             />
+          ) : (
+            <div className="grid h-16 w-16 place-items-center rounded-xl bg-cream text-2xl">
+              📷
+            </div>
           )}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="rounded-full bg-blueberry px-4 py-2 text-sm font-bold text-white shadow-md"
+            >
+              📷 Take photo
+            </button>
+            <button
+              type="button"
+              onClick={() => galleryRef.current?.click()}
+              className="rounded-full border-2 border-cocoa/15 px-4 py-2 text-sm font-bold text-cocoa"
+            >
+              🖼️ Choose photo
+            </button>
+          </div>
+          {/* Camera capture (mobile) */}
           <input
-            ref={fileRef}
+            ref={cameraRef}
             type="file"
             accept="image/*"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) setPhotoPreview(URL.createObjectURL(f));
-            }}
-            className="text-sm"
+            capture="environment"
+            onChange={onPickPhoto}
+            className="hidden"
+          />
+          {/* Pick from gallery / files */}
+          <input
+            ref={galleryRef}
+            type="file"
+            accept="image/*"
+            onChange={onPickPhoto}
+            className="hidden"
           />
         </div>
+        <p className="mt-1 text-xs text-cocoa/50">
+          Photos are shrunk automatically before saving.
+        </p>
       </div>
 
       {error && (

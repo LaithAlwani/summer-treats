@@ -22,10 +22,27 @@ const gochi = Gochi_Hand({
   weight: "400",
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://summer-treats-kids.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Summer Treats 🍪🍹",
   description:
     "Fresh baked goods and refreshing drinks, made by kids. Preorder this week's treats!",
+  openGraph: {
+    title: "Summer Treats 🍪🍹",
+    description:
+      "Fresh baked goods and refreshing drinks, made by kids. Preorder this week's treats!",
+    type: "website",
+    siteName: "Summer Treats",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Summer Treats 🍪🍹",
+    description:
+      "Fresh baked goods and refreshing drinks, made by kids. Preorder this week's treats!",
+  },
 };
 
 export default function RootLayout({

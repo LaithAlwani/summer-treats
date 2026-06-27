@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="46" fill="#e7b073" stroke="#cd9152" stroke-width="4"/>
-  <g fill="#5a3a22">
-    <circle cx="34" cy="36" r="6"/>
-    <circle cx="62" cy="30" r="5"/>
-    <circle cx="68" cy="56" r="6"/>
-    <circle cx="44" cy="60" r="5"/>
-    <circle cx="30" cy="62" r="4"/>
-    <circle cx="54" cy="46" r="4"/>
+  <circle cx="50" cy="50" r="47" fill="#f8ce3f" />
+  <circle cx="50" cy="50" r="39" fill="#fff7e0" />
+  <circle cx="50" cy="50" r="33" fill="#fde58a" />
+  <g stroke="#fff7e0" stroke-width="3" stroke-linecap="round">
+    <line x1="17" y1="50" x2="83" y2="50" />
+    <line x1="50" y1="17" x2="50" y2="83" />
+    <line x1="26.7" y1="26.7" x2="73.3" y2="73.3" />
+    <line x1="73.3" y1="26.7" x2="26.7" y2="73.3" />
   </g>
+  <circle cx="50" cy="50" r="4" fill="#fff7e0" />
 </svg>

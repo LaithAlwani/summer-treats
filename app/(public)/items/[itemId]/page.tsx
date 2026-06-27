@@ -9,6 +9,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useCart } from "@/lib/cart";
 import { formatMoney } from "@/lib/format";
 import { prettyDate } from "@/lib/dates";
+import { DEFAULT_CUTOFF, isOrderingOpenForDate, cutoffLabel } from "@/lib/cutoff";
 import { categoryInfo, KITCHEN_DISCLAIMER } from "@/lib/allergens";
 import { AllergenBadges } from "@/components/AllergenBadges";
 import { QuantityStepper } from "@/components/QuantityStepper";
@@ -20,6 +21,14 @@ export default function ItemDetailPage() {
   const date = search.get("date");
 
   const item = useQuery(api.items.getById, { itemId });
+  const status = useQuery(api.settings.getStoreStatus, {});
+  const cutoff = status
+    ? { time: status.cutoffTime, daysBefore: status.cutoffDaysBefore }
+    : DEFAULT_CUTOFF;
+  const dayOpen =
+    !!date &&
+    (status?.acceptingPreorders ?? true) &&
+    isOrderingOpenForDate(date, cutoff);
   const { add } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -129,15 +138,21 @@ export default function ItemDetailPage() {
               <p className="mb-2 text-sm font-semibold text-cocoa/60">
                 Pickup {prettyDate(date)}
               </p>
-              <div className="flex items-center gap-3">
-                <QuantityStepper value={qty} onChange={setQty} min={1} />
-                <button
-                  onClick={handleAdd}
-                  className="flex-1 rounded-full bg-mint px-5 py-3 font-display text-lg font-bold text-emerald-900 shadow-md transition hover:brightness-105"
-                >
-                  {added ? "Added! ✓" : `Add ${qty} to order +`}
-                </button>
-              </div>
+              {dayOpen ? (
+                <div className="flex items-center gap-3">
+                  <QuantityStepper value={qty} onChange={setQty} min={1} />
+                  <button
+                    onClick={handleAdd}
+                    className="flex-1 rounded-full bg-mint px-5 py-3 font-display text-lg font-bold text-emerald-900 shadow-md transition hover:brightness-105"
+                  >
+                    {added ? "Added! ✓" : `Add ${qty} to order +`}
+                  </button>
+                </div>
+              ) : (
+                <p className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-center font-semibold text-amber-800">
+                  ⏰ Ordering for this day closed at {cutoffLabel(date, cutoff)}.
+                </p>
+              )}
             </div>
           ) : (
             <div className="border-t-2 border-cocoa/10 pt-5 text-center">

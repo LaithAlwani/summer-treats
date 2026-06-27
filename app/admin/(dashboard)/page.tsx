@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -8,8 +8,54 @@ import { formatMoney } from "@/lib/format";
 import { prettyDate } from "@/lib/dates";
 import { PreordersSwitch } from "@/components/admin/PreordersSwitch";
 import { PickupWindowsEditor } from "@/components/admin/PickupWindowsEditor";
+import { OrderCutoffEditor } from "@/components/admin/OrderCutoffEditor";
 
 type Status = "pending" | "confirmed" | "fulfilled" | "cancelled";
+
+// A short two-note chime via Web Audio (no asset needed).
+function playChime() {
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    const ctx = new Ctx();
+    [880, 1320].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.type = "sine";
+      o.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      o.start(t);
+      o.stop(t + 0.32);
+    });
+  } catch {
+    // audio may be blocked until the user interacts — ignore.
+  }
+}
+
+// Chime + tab-title flash whenever the number of new orders goes up.
+function useNewOrderAlert(pendingCount: number | undefined) {
+  const prev = useRef<number | null>(null);
+  useEffect(() => {
+    if (pendingCount === undefined) return;
+    if (prev.current !== null && pendingCount > prev.current) {
+      playChime();
+      document.title = `🔔 New order! (${pendingCount})`;
+      const t = setTimeout(() => {
+        document.title = "Summer Treats 🍪🍹";
+      }, 6000);
+      prev.current = pendingCount;
+      return () => clearTimeout(t);
+    }
+    prev.current = pendingCount;
+  }, [pendingCount]);
+}
 
 const STATUS_TABS: { value: Status | "all"; label: string }[] = [
   { value: "pending", label: "New" },
@@ -35,10 +81,13 @@ export default function AdminOrdersPage() {
   const pendingCount =
     orders?.filter((o) => o.status === "pending").length ?? 0;
 
+  useNewOrderAlert(orders ? pendingCount : undefined);
+
   return (
     <div className="space-y-6">
       <PreordersSwitch />
       <PickupWindowsEditor />
+      <OrderCutoffEditor />
 
       <div>
         <h1 className="text-3xl text-watermelon">Orders</h1>

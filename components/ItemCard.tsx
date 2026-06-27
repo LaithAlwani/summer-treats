@@ -20,7 +20,11 @@ export function ItemCard({
   const { add } = useCart();
   const [added, setAdded] = useState(false);
   const cat = categoryInfo(item.category);
-  const disabled = !ordersOpen || item.soldOut;
+  const remaining = item.remaining;
+  const outByLimit = remaining != null && remaining <= 0;
+  const soldOut = item.soldOut || outByLimit;
+  const lowStock = remaining != null && remaining > 0 && remaining <= 5;
+  const disabled = !ordersOpen || soldOut;
 
   function handleAdd() {
     add(date, { itemId: item._id, name: item.name, price: item.price });
@@ -52,11 +56,16 @@ export function ItemCard({
           <span className="handw absolute left-2 top-2 rounded-full bg-white/90 px-3 py-0.5 text-base text-cocoa shadow">
             {cat.emoji} {cat.label}
           </span>
-          {item.soldOut && (
+          {soldOut && (
             <span className="absolute inset-0 grid place-items-center bg-cocoa/55">
               <span className="-rotate-6 rounded-xl bg-white px-4 py-1 font-display text-lg font-extrabold text-watermelon shadow">
                 Sold out
               </span>
+            </span>
+          )}
+          {!soldOut && lowStock && (
+            <span className="handw absolute left-2 bottom-1 rounded-full bg-watermelon px-3 py-0.5 text-base text-white shadow">
+              only {remaining} left!
             </span>
           )}
           {/* Price tag tied to the corner */}
@@ -83,7 +92,7 @@ export function ItemCard({
             disabled={disabled}
             className="flex-1 rounded-full bg-mint px-4 py-2.5 font-display font-bold text-emerald-900 shadow-md transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {item.soldOut
+            {soldOut
               ? "Sold out"
               : !ordersOpen
                 ? "Closed"
